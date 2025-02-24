@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO Test</title>
+    <style>
+      #messages {
+        height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      .message {
+        margin: 5px 0;
+        padding: 5px;
+        background-color: #f0f0f0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message..." />
+    <button onclick="sendMessage()">Send</button>
+
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+
+    <script defer>
+      const socket = io("ws://localhost", {
+        withCredentials: false,
+        transports: ["polling", "websocket"],
+        transportOptions: {
+          polling: {
+            extraHeaders: {
+              "X-Clientid": "client-" + Math.random(),
+            },
+          },
+        },
+      });
+
+      const messagesDiv = document.getElementById("messages");
+      const messageInput = document.getElementById("messageInput");
+
+      function addMessage(text) {
+        const messageElement = document.createElement("div");
+        messageElement.className = "message";
+        messageElement.textContent = text;
+        messagesDiv.appendChild(messageElement);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      socket.on("connect", () => {
+        addMessage(`Connected with ID: ${socket.id}`);
+      });
+
+      socket.on("server-message", (data) => {
+        addMessage(`Server ${data.containerId}: ${data.message} (${data.timestamp})`);
+      });
+
+      socket.on("server-response", (data) => {
+        addMessage(`Server ${data.containerId} received: ${JSON.stringify(data.received)}`);
+      });
+
+      function sendMessage() {
+        const message = messageInput.value;
+        if (message) {
+          socket.emit("client-message", { text: message, timestamp: new Date() });
+          messageInput.value = "";
+        }
+      }
+
+      messageInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+      });
+    </script>
+  </body>
+</html>

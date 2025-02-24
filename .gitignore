@@ -1,0 +1,7 @@
+.env
+*.txt
+node_modules/
+.DS_Store
+dump*/
+config.conf
+dogecoin.conf
